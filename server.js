@@ -65,21 +65,19 @@ function addEmploy(){
       message:"last name of employee"
     },
     {
-      type: "list",
+      type: "number",
       name: "employRole",
-      message:"what is employee's role",
-      choices: ["student", "Engineer", "HR","Accountant"]
+      message:"what is employee's role Id",
     },
     {
-      type: "list",
+      type: "number",
       name: "manager",
-      message:"who is the employee's manager",
-      choices: ["test", "something"]
+      message:"what is the employee's Id",
     }
   ]).then(answer =>{
     console.log(answer);
     const toAddEmploy = `INSERT INTO employee (firstName, lastName, roleId, managerId) VALUES(?, ?, ?, ?);`;
-    connection.query(toAddEmploy, [answer.firstName, answer.lastName, 1 , 4],(err , choices) => {
+    connection.query(toAddEmploy, [answer.firstName, answer.lastName,answer.employRole, answer.manager ],(err , choices) => {
 
       if (err) throw err;
       console.log(toAddEmploy);
@@ -148,21 +146,52 @@ function view(){
       console.log(viewPrompt);
     })
   })
-  connection.end();
 };
 function update(){
-  inquirer.prompt([
-    {
-      type: "list",
-      name: "update",
-      message: "Which employee would you like to update?",
-      choices: ["role", "manager", "employee"]
-    }
-  ]).then(answer => {
-    const employUpdate = "UPDATE employee (firstName, lastName, roleId, managerId) WHERE (?, ?, ?, ?);";
-    connection.query(employUpdate,)
-  })
+  const allEmploy = `SELECT * FROM employee;`;
+  
+    connection.query(allEmploy, (err, res) => {
+      console.log(allEmploy);
+      if (err) throw err;
+
+      const allEmployArr = res.map((employee) => {
+        return {
+          value: employee.id,
+          name: `${employee.firstName} ${employee.lastName}`
+        }
+      })
+      inquirer.prompt([
+        {
+          type: "rawlist",
+          name: "update",
+          message: "Which employee would you like to update?",
+          choices: allEmployArr
+        }
+      ]).then(answer => {
+        console.log(answer);
+        inquirer.prompt([
+          {
+            type: "number",
+            name: "employRole",
+            message:"what is employee's role Id",
+          },
+          // {
+          //   type: "number",
+          //   name: "manager",
+          //   message:"what is the employee's manager Id",
+          // }
+        ]).then(answer => {
+            const employUpdate = `UPDATE employee SET roleId WHERE id;`;
+            connection.query(employUpdate,[{roleId : answer.employRole}, {id: answer.id}], err => {
+              if (err) throw err;
+              console.log(answer)
+              promptEmploy();
+            })
+        })
+        })
+    })
+  }
 };
-};
+
 
 promptEmploy();
