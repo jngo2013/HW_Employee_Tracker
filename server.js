@@ -1,6 +1,5 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
-// const trackerQ = require('./models/trackerQ');
 
 const PORT = 3001;
 const connection = mysql.createConnection({
@@ -42,13 +41,14 @@ function add(){
       type: "list",
       name: "add",
       message: "What would you like to add?",
-      choices: ["department", "roles", "employees"]
+      choices: ["department", "roles", "employee"]
     }
   ]).then(answer => {
     switch(answer.add) {
-      case "employees": addEmploy(); break;
+      case "employee": addEmploy(); break;
       case "roles": addRoles(); break;
       case "department": addDep(); break;
+      default:break;
     }
   })
 };
@@ -72,7 +72,7 @@ function addEmploy(){
     {
       type: "number",
       name: "manager",
-      message:"what is the employee's Id",
+      message:"what is the manager's Id",
     }
   ]).then(answer =>{
     console.log(answer);
@@ -135,18 +135,47 @@ function view(){
       type: "list",
       name: "view",
       message: "What would you like to view?",
-      choices: ["department", "roles", "employees"]
+      choices: ["department", "roles", "employee"]
     }
   ]).then(answer => {
-    console.log(answer);
-    viewPrompt = `SELECT * FROM ${answer.view};`;
-    console.log(viewPrompt);
-    connection.query(viewPrompt, err =>{
-      if(err) throw err;
-      console.log(viewPrompt);
-    })
+    switch(answer.view){
+      case "department": viewDepart(); break;
+      case "roles": viewRoles(); break;
+      case "employee": viewEmployee(); break;
+      default:break;
+
+    }
   })
 };
+function viewDepart(){
+  const toViewDepart = "SELECT * FROM department;";
+  connection.query(toViewDepart,(err, department) => {
+    if (err) throw err;
+    console.log(department);
+    promptEmploy();
+    return department.map(department => department);
+  })
+};
+function viewRoles(){
+  const toViewRoles = "SELECT * FROM roles;";
+  connection.query(toViewRoles,(err, roles) => {
+    if (err) throw err;
+    console.log(roles);
+    promptEmploy();
+    return roles.map(roles => roles);
+  })
+};
+function viewEmployee(){
+  const toViewEmployee = "SELECT * FROM employee;";
+  connection.query(toViewEmployee,(err, employee) => {
+    if (err) throw err;
+    console.log(employee);
+    promptEmploy();
+    return employee.map(employee => employee);
+  })
+};
+
+
 function update(){
   const allEmploy = `SELECT * FROM employee;`;
   
@@ -166,29 +195,21 @@ function update(){
           name: "update",
           message: "Which employee would you like to update?",
           choices: allEmployArr
-        }
-      ]).then(answer => {
-        console.log(answer);
-        inquirer.prompt([
-          {
-            type: "number",
-            name: "employRole",
-            message:"what is employee's role Id",
-          },
-          // {
-          //   type: "number",
-          //   name: "manager",
-          //   message:"what is the employee's manager Id",
-          // }
+        },
+        {
+          type: "number",
+          name: "employRole",
+          message:"what is employee's role Id",
+        },
         ]).then(answer => {
-            const employUpdate = `UPDATE employee SET roleId WHERE id;`;
+            const employUpdate = `UPDATE employee SET roleId ='${answer.employRole}' WHERE id='${answer.update}';`;
             connection.query(employUpdate,[{roleId : answer.employRole}, {id: answer.id}], err => {
               if (err) throw err;
               console.log(answer)
               promptEmploy();
             })
         })
-        })
+        
     })
   }
 };
